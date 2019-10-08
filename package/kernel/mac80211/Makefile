@@ -31,7 +31,8 @@ PKG_DRIVERS = \
 	p54-common p54-pci p54-usb \
 	rsi91x rsi91x-usb rsi91x-sdio\
 	wlcore wl12xx wl18xx \
-	zd1211rw
+	zd1211rw \
+	qtnfmac
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_kmod-mac80211 \
@@ -78,6 +79,7 @@ config-y:= \
 	WLAN_VENDOR_ST \
 	WLAN_VENDOR_TI \
 	WLAN_VENDOR_ZYDAS \
+	WLAN_VENDOR_QUANTENNA
 
 config-$(call config_package,cfg80211) += CFG80211
 
@@ -378,6 +380,18 @@ define KernelPackage/zd1211rw
   AUTOLOAD:=$(call AutoProbe,zd1211rw)
 endef
 
+define KernelPackage/qtnfmac
+  $(call KernelPackage/mac80211/Default)
+  TITLE:=Quantenna
+  DEPENDS+= @PCI_SUPPORT +kmod-mac80211 +@DRIVER_11W_SUPPORT
+  FILES:= \
+	$(PKG_BUILD_DIR)/drivers/net/wireless/quantenna/qtnfmac/qtnfmac.ko \
+	$(PKG_BUILD_DIR)/drivers/net/wireless/quantenna/qtnfmac/qtnfmac_pcie.ko
+  AUTOLOAD:=$(call AutoProbe,qtnfmac_pcie qtnfmac)
+  MODPARAMS.qtnfmac_pcie:=flashboot=0
+endef
+
+
 ifdef CONFIG_PACKAGE_MAC80211_DEBUGFS
   config-y += \
 	CFG80211_DEBUGFS \
@@ -413,6 +427,7 @@ config-$(call config_package,wl12xx) += WL12XX
 config-$(call config_package,wl18xx) += WL18XX
 config-y += WL_TI WILINK_PLATFORM_DATA
 config-$(call config_package,zd1211rw) += ZD1211RW
+config-$(call config_package,qtnfmac) += QTNFMAC QTNFMAC_PCIE
 config-$(call config_package,rsi91x) += RSI_91X
 config-$(call config_package,rsi91x-usb) += RSI_USB
 config-$(call config_package,rsi91x-sdio) += RSI_SDIO
@@ -533,6 +548,10 @@ endef
 define KernelPackage/zd1211rw/install
 	$(INSTALL_DIR) $(1)/lib/firmware/zd1211
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/$(ZD1211FW_NAME)/zd1211* $(1)/lib/firmware/zd1211
+endef
+
+define KernelPackage/qtnfmac/install
+	$(INSTALL_DIR) $(1)/lib/firmware/qtn
 endef
 
 $(eval $(foreach drv,$(PKG_DRIVERS),$(call KernelPackage,$(drv))))
