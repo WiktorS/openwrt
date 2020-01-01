@@ -1,7 +1,6 @@
 #include "qcom-ipq8064-v1.0.dtsi"
 
 #include <dt-bindings/input/input.h>
-#include <dt-bindings/soc/qcom,tcsr.h>
 
 / {
 	model = "Netgear Nighthawk X4 R7500";
@@ -30,10 +29,10 @@
 		led-failsafe = &power_amber;
 		led-running = &power_white;
 		led-upgrade = &power_amber;
+		label-mac-device = &gmac2;
 	};
 
 	chosen {
-		bootargs = "rootfstype=squashfs noinitrd";
 		stdout-path = "serial0:115200n8";
 	};
 
@@ -63,16 +62,7 @@
 						"gpio24","gpio26", "gpio53", "gpio64";
 					function = "gpio";
 					drive-strength = <2>;
-					bias-pull-up;
-				};
-			};
-
-			mdio0_pins: mdio0_pins {
-				mux {
-					pins = "gpio0", "gpio1";
-					function = "gpio";
-					drive-strength = <8>;
-					bias-disable;
+					bias-pull-down;
 				};
 			};
 
@@ -102,6 +92,20 @@
 				};
 			};
 
+			mdio0_pins: mdio0_pins {
+				mux {
+					pins = "gpio0", "gpio1";
+					function = "gpio";
+					drive-strength = <8>;
+					bias-disable;
+				};
+
+				clk {
+					pins = "gpio1";
+					input-disable;
+				};
+			};
+
 			rgmii2_pins: rgmii2_pins {
 				mux {
 					pins = "gpio27", "gpio28", "gpio29", "gpio30", "gpio31", "gpio32",
@@ -109,6 +113,91 @@
 					function = "rgmii2";
 					drive-strength = <8>;
 					bias-disable;
+				};
+
+				tx {
+					pins = "gpio27", "gpio28", "gpio29", "gpio30", "gpio31", "gpio32" ;
+					input-disable;
+				};
+			};
+
+			spi_pins: spi_pins {
+				mux {
+					pins = "gpio18", "gpio19", "gpio21";
+					function = "gsbi5";
+					bias-pull-down;
+				};
+
+				data {
+					pins = "gpio18", "gpio19";
+					drive-strength = <10>;
+				};
+
+				cs {
+					pins = "gpio20";
+					drive-strength = <10>;
+					bias-pull-up;
+				};
+
+				clk {
+					pins = "gpio21";
+					drive-strength = <12>;
+				};
+			};
+
+			spi6_pins: spi6_pins {
+				mux {
+					pins = "gpio55", "gpio56", "gpio58";
+					function = "gsbi6";
+					bias-pull-down;
+				};
+
+				mosi {
+					pins = "gpio55";
+					drive-strength = <12>;
+				};
+
+				miso {
+					pins = "gpio56";
+					drive-strength = <14>;
+				};
+
+				cs {
+					pins = "gpio57";
+					drive-strength = <12>;
+					bias-pull-up;
+				};
+
+				clk {
+					pins = "gpio58";
+					drive-strength = <12>;
+				};
+
+				reset {
+					pins = "gpio33";
+					drive-strength = <10>;
+					bias-pull-down;
+					output-high;
+				};
+			};
+
+			usb0_pwr_en_pins: usb0_pwr_en_pins {
+				mux {
+					pins = "gpio15";
+					function = "gpio";
+					drive-strength = <12>;
+					bias-pull-down;
+					output-high;
+				};
+			};
+
+			usb1_pwr_en_pins: usb1_pwr_en_pins {
+				mux {
+					pins = "gpio16", "gpio68";
+					function = "gpio";
+					drive-strength = <12>;
+					bias-pull-down;
+					output-high;
 				};
 			};
 		};
@@ -132,25 +221,36 @@
 		};
 
 		sata@29000000 {
+			ports-implemented = <0x1>;
 			status = "okay";
 		};
 
 		usb3_0: usb3@110f8800 {
-			clocks = <&gcc USB30_1_MASTER_CLK>;
 			status = "okay";
+
+			pinctrl-0 = <&usb0_pwr_en_pins>;
+			pinctrl-names = "default";
 		};
 
 		usb3_1: usb3@100f8800 {
-			clocks = <&gcc USB30_0_MASTER_CLK>;
 			status = "okay";
+
+			pinctrl-0 = <&usb1_pwr_en_pins>;
+			pinctrl-names = "default";
 		};
 
 		pcie0: pci@1b500000 {
 			status = "okay";
+			reset-gpio = <&qcom_pinmux 3 GPIO_ACTIVE_LOW>;
+			pinctrl-0 = <&pcie0_pins>;
+			pinctrl-names = "default";
 		};
 
 		pcie1: pci@1b700000 {
 			status = "okay";
+			reset-gpio = <&qcom_pinmux 48 GPIO_ACTIVE_LOW>;
+			pinctrl-0 = <&pcie1_pins>;
+			pinctrl-names = "default";
 			force_gen1 = <1>;
 		};
 
@@ -204,18 +304,12 @@
 
 					ubi@1740000 {
 						label = "ubi";
-						reg = <0x1740000 0x1600000>;
+						reg = <0x1740000 0x61C0000>;
 					};
 
-					netgear@2d40000 {
-						label = "netgear";
-						reg = <0x2d40000 0x0c00000>;
-						read-only;
-					};
-
-					reserve@3940000 {
+					reserve@7900000 {
 						label = "reserve";
-						reg = <0x3940000 0x46c0000>;
+						reg = <0x7900000 0x0700000>;
 						read-only;
 					};
 				};
@@ -253,6 +347,13 @@
 			status = "okay";
 			phy-mode = "rgmii";
 			qcom,id = <1>;
+			qcom,phy_mdio_addr = <4>;
+			qcom,poll_required = <0>;
+			qcom,rgmii_delay = <1>;
+			qcom,phy_mii_type = <0>;
+			qcom,emulation = <0>;
+			qcom,irq = <255>;
+			mdiobus = <&mdio0>;
 
 			pinctrl-0 = <&rgmii2_pins>;
 			pinctrl-names = "default";
@@ -269,6 +370,13 @@
 			status = "okay";
 			phy-mode = "sgmii";
 			qcom,id = <2>;
+			qcom,phy_mdio_addr = <0>;	/* none */
+			qcom,poll_required = <0>;	/* no polling */
+			qcom,rgmii_delay = <0>;
+			qcom,phy_mii_type = <1>;
+			qcom,emulation = <0>;
+			qcom,irq = <258>;
+			mdiobus = <&mdio0>;
 
 			mtd-mac-address = <&art 0>;
 
@@ -288,18 +396,24 @@
 			label = "wifi";
 			gpios = <&qcom_pinmux 6 GPIO_ACTIVE_LOW>;
 			linux,code = <KEY_RFKILL>;
+			debounce-interval = <60>;
+			wakeup-source;
 		};
 
 		reset {
 			label = "reset";
 			gpios = <&qcom_pinmux 54 GPIO_ACTIVE_LOW>;
 			linux,code = <KEY_RESTART>;
+			debounce-interval = <60>;
+			wakeup-source;
 		};
 
 		wps {
 			label = "wps";
 			gpios = <&qcom_pinmux 65 GPIO_ACTIVE_LOW>;
 			linux,code = <KEY_WPS_BUTTON>;
+			debounce-interval = <60>;
+			wakeup-source;
 		};
 	};
 
@@ -308,14 +422,10 @@
 		pinctrl-0 = <&led_pins>;
 		pinctrl-names = "default";
 
-		usb1 {
-			label = "r7500:white:usb1";
-			gpios = <&qcom_pinmux 7 GPIO_ACTIVE_HIGH>;
-		};
-
-		usb2 {
-			label = "r7500:white:usb2";
-			gpios = <&qcom_pinmux 8 GPIO_ACTIVE_HIGH>;
+		power_white: power_white {
+			label = "r7500:white:power";
+			gpios = <&qcom_pinmux 53 GPIO_ACTIVE_HIGH>;
+			default-state = "keep";
 		};
 
 		power_amber: power_amber {
@@ -333,9 +443,14 @@
 			gpios = <&qcom_pinmux 23 GPIO_ACTIVE_HIGH>;
 		};
 
-		wps {
-			label = "r7500:white:wps";
-			gpios = <&qcom_pinmux 24 GPIO_ACTIVE_HIGH>;
+		usb1 {
+			label = "r7500:white:usb1";
+			gpios = <&qcom_pinmux 7 GPIO_ACTIVE_HIGH>;
+		};
+
+		usb2 {
+			label = "r7500:white:usb2";
+			gpios = <&qcom_pinmux 8 GPIO_ACTIVE_HIGH>;
 		};
 
 		esata {
@@ -343,22 +458,16 @@
 			gpios = <&qcom_pinmux 26 GPIO_ACTIVE_HIGH>;
 		};
 
-		power_white: power_white {
-			label = "r7500:white:power";
-			gpios = <&qcom_pinmux 53 GPIO_ACTIVE_HIGH>;
-			default-state = "keep";
-		};
-
 		wifi {
 			label = "r7500:white:wifi";
 			gpios = <&qcom_pinmux 64 GPIO_ACTIVE_HIGH>;
 		};
-	};
-};
 
-&tcsr {
-	qcom,usb-ctrl-select = <TCSR_USB_SELECT_USB3_DUAL>;
-	compatible = "qcom,tcsr";
+		wps {
+			label = "r7800:white:wps";
+			gpios = <&qcom_pinmux 24 GPIO_ACTIVE_HIGH>;
+		};
+	};
 };
 
 &adm_dma {
