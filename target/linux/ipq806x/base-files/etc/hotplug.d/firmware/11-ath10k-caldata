@@ -58,6 +58,7 @@ case "$FIRMWARE" in
 		ath10k_patch_mac $(mtd_get_mac_binary PRODUCTDATA 0xc)
 		;;
 	netgear,d7800 |\
+	netgear,r7500 |\
 	netgear,r7500v2 |\
 	netgear,r7800)
 		caldata_extract "art" 0x5000 0x2f20
