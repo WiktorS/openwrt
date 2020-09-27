@@ -240,7 +240,6 @@
 			partition0,9@1fa0000 {
 				label = "ecos";
 				reg = <0x01fa0000 0x06020000>;
-				read-only;
 			};
 
 			partition0,10@7fc0000 {
